@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070B18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Soupline">
+<meta name="description" content="L'assouplissant du gardien. Grand écart facial : séances guidées du soir, adaptées à l'énergie et au calendrier des matchs.">
+<title>Soupline</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icone-180.png">
+<link rel="icon" type="image/png" href="icone-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="fond" aria-hidden="true"></div>
+
+<div id="app">
+  <header class="entete">
+    <div class="marque">
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+        <circle cx="20" cy="20" r="19" fill="#141C3E" stroke="rgba(255,255,255,.1)"/>
+        <g stroke="#FFB547" stroke-width="3.6" stroke-linecap="round" fill="none">
+          <path d="M20 21 L8.5 29 M20 21 L31.5 29"/>
+          <path d="M20 21 V13.5"/>
+          <path d="M20 15 L12 11.5 M20 15 L28 11.5"/>
+        </g>
+        <circle cx="20" cy="9" r="3" fill="#FFB547"/>
+      </svg>
+      <span>Soupline</span>
+    </div>
+    <div class="date" id="date-jour"></div>
+  </header>
+
+  <main>
+    <section class="vue active" id="v-accueil" aria-label="Ce soir"></section>
+    <section class="vue" id="v-progres" aria-label="Progrès"></section>
+    <section class="vue" id="v-comprendre" aria-label="Comprendre"></section>
+  </main>
+
+  <nav class="onglets" aria-label="Navigation">
+    <button data-vue="accueil" class="actif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <span>Ce soir</span>
+    </button>
+    <button data-vue="progres">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18"/><path d="M5 16l5-5 4 3 6-7"/><circle cx="20" cy="7" r="1.5" fill="currentColor"/></svg>
+      <span>Progrès</span>
+    </button>
+    <button data-vue="comprendre">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 4.8 7 4.5 4 5v13c3-.5 6-.2 8 1.5 2-1.7 5-2 8-1.5V5c-3-.5-6-.2-8 1.5z"/><path d="M12 6.5V19"/></svg>
+      <span>Comprendre</span>
+    </button>
+  </nav>
+</div>
+
+<div class="voile" id="voile"></div>
+<div class="feuille" id="feuille" role="dialog" aria-modal="true" aria-labelledby="f-titre"></div>
+
+<div class="lecteur" id="lecteur" role="dialog" aria-modal="true" aria-label="Séance en cours">
+  <div class="l-haut">
+    <button class="rond" id="l-fermer" aria-label="Arrêter la séance">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="l-progression">
+      <div class="l-barre" id="l-barre"></div>
+      <div class="l-temps"><span id="l-seance"></span><span id="l-reste"></span></div>
+    </div>
+    <button class="rond" id="l-voix" aria-label="Voix"></button>
+  </div>
+  <div class="l-titre"><h2 id="l-nom"></h2><span class="puce" id="l-cote"></span></div>
+  <div class="l-scene"><svg id="l-svg" aria-hidden="true"></svg><span class="l-vue" id="l-vue"></span><div class="compte" id="l-compte"></div></div>
+  <div class="l-bas">
+    <div class="anneau">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="bulle" id="l-bulle" cx="60" cy="60" r="44"/>
+        <circle class="fond-a" cx="60" cy="60" r="54" fill="none" stroke-width="7"/>
+        <circle class="arc" id="l-arc" cx="60" cy="60" r="54" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+      </svg>
+      <div class="anneau-texte" aria-live="polite"><b id="l-label"></b><span id="l-sous"></span></div>
+    </div>
+    <p class="l-consigne" id="l-consigne"></p>
+    <div class="l-controles">
+      <button class="rond" id="l-prec" aria-label="Exercice précédent">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 6h2v12H7zM20 6v12l-9-6z"/></svg>
+      </button>
+      <button class="rond gros" id="l-pause" aria-label="Pause"></button>
+      <button class="rond" id="l-suiv" aria-label="Exercice suivant">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 6h2v12h-2zM4 6v12l9-6z"/></svg>
+      </button>
+    </div>
+    <p class="l-rappel">Vise 6 sur 10. Jamais la douleur.</p>
+  </div>
+</div>
+
+<div class="plein" id="fin" role="dialog" aria-modal="true" aria-label="Séance terminée"></div>
+<div class="plein" id="mesure" role="dialog" aria-modal="true" aria-label="Mesurer ton écart"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="figure.js"></script>
+<script src="programme.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
