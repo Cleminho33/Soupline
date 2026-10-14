@@ -1,7 +1,7 @@
 // Soupline · réseau d'abord (toujours la dernière version), cache en secours
 // pour les soirs sans réseau, à l'hôtel lors des déplacements.
 // La 3D (three.js) vient d'un CDN à version figée : on la garde en cache dès le premier chargement.
-var CACHE = "soupline-v2";
+var CACHE = "soupline-v3";
 var COEUR = ["./", "index.html", "style.css", "figure.js", "figure3d.js", "programme.js", "app.js", "manifest.webmanifest",
   "icone-180.png", "icone-192.png", "icone-512.png"];
 var CDN = ["https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
@@ -31,7 +31,8 @@ self.addEventListener("fetch", function (e) {
     }));
     return;
   }
-  e.respondWith(fetch(e.request).then(function (r) {
+  // no-cache : on revalide chaque fichier auprès du serveur, pour ne jamais mélanger deux versions de l'app
+  e.respondWith(fetch(e.request, url.origin === location.origin ? { cache: "no-cache" } : undefined).then(function (r) {
     if (r && r.ok && url.origin === location.origin) {
       var copie = r.clone();
       caches.open(CACHE).then(function (c) { c.put(e.request, copie); });

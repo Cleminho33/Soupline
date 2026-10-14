@@ -843,6 +843,7 @@
     terminer(false);
   }
   function blocSuivant(cle, n, prudence) {
+    if (!P.blocs) return null;
     for (var k = n + 1; k < P.blocs(cle).length; k++) {
       var s = P.construire(cle, ctxSeance(prudence), k);
       if (s.segments.length) return s;
