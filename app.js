@@ -309,6 +309,103 @@
   }
 
   // =====================================================================
+  // LE MASQUE DE GARDIEN : il se peint au fil des minutes cumulées, rien ne s'efface après une pause
+  // =====================================================================
+  var MQ = {
+    vert: "#1F9D4A", vert2: "#178A3E", jaune: "#F2E400", nuit: "#13201A", creme: "#F4F1E6", orange: "#FF8A3D", resine: "#2B3459",
+    coque: "M110 10C160 10 196 44 198 100C200 150 188 190 164 220C148 238 130 248 110 248C90 248 72 238 56 220C32 190 20 150 22 100C24 44 60 10 110 10Z",
+    grille: "M58 92C62 74 84 68 110 68C136 68 158 74 162 92L158 150C154 176 134 192 110 194C86 192 66 176 62 150Z",
+    flamme: "M148 206C168 196 182 176 186 150C190 130 194 112 192 92C186 104 182 112 176 116C180 100 182 84 178 66C172 84 166 96 160 104C162 120 160 140 154 156C150 172 146 186 140 196Z",
+    coeur: "M152 198C166 188 176 170 178 150C181 132 184 118 182 104C176 116 170 124 164 128C166 146 162 166 152 184Z",
+    rayures: "M36 92C44 70 62 54 86 46M44 100C52 80 68 64 90 56M184 92C176 70 158 54 134 46M176 100C168 80 152 64 130 56",
+    etoile: "110,211 113.2,219.6 122.4,220 115.2,225.7 117.6,234.5 110,229.5 102.4,234.5 104.8,225.7 97.6,220 106.8,219.6",
+    miroir: ' transform="matrix(-1 0 0 1 220 0)"',
+    esq: ' fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.4" stroke-dasharray="3 4"'
+  };
+  function mqRect(x, y, w, h, c) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"/>'; }
+  function mqDeux(attr) { return '<text x="110" y="60" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="900" font-size="44"' + attr + ">2</text>"; }
+  function mqAerations(attr) {
+    return [[84, 212, -25], [76, 224, -25], [136, 212, 25], [144, 224, 25]].map(function (a) {
+      return '<ellipse cx="' + a[0] + '" cy="' + a[1] + '" rx="5.5" ry="3" transform="rotate(' + a[2] + " " + a[0] + " " + a[1] + ')"' + attr + "/>";
+    }).join("");
+  }
+  function mqAttaches(attr) {
+    return [[59, 104], [161, 104], [63, 158], [157, 158], [110, 69]].map(function (a) { return '<circle cx="' + a[0] + '" cy="' + a[1] + '" r="4.2"' + attr + "/>"; }).join("");
+  }
+  function mqBarreaux(c) {
+    var s = "";
+    [74, 92, 110, 128, 146].forEach(function (x) { s += '<line x1="' + x + '" y1="60" x2="' + x + '" y2="200"/>'; });
+    [96, 122, 148, 174].forEach(function (y) { s += '<line x1="50" y1="' + y + '" x2="170" y2="' + y + '"/>'; });
+    return '<g stroke="' + c + '" stroke-width="4" stroke-linecap="round">' + s + "</g>";
+  }
+  // Les 18 touches, dans l'ordre où elles se peignent. z : plan de dessin. clip : peinte sur la coque
+  var MASQUE = [
+    { nom: "le front", seuil: 5, z: 1, peint: mqRect(0, 0, 220, 72, MQ.vert) },
+    { nom: "la tempe gauche", seuil: 15, z: 1, peint: mqRect(0, 72, 110, 68, MQ.vert) },
+    { nom: "la tempe droite", seuil: 25, z: 1, peint: mqRect(110, 72, 110, 68, MQ.vert) },
+    { nom: "la joue gauche", seuil: 40, z: 1, peint: mqRect(0, 140, 110, 60, MQ.vert2) },
+    { nom: "la joue droite", seuil: 55, z: 1, peint: mqRect(110, 140, 110, 60, MQ.vert2) },
+    { nom: "le menton", seuil: 75, z: 1, peint: mqRect(0, 200, 220, 60, MQ.nuit) },
+    { nom: "le numéro 2", seuil: 100, z: 4, peint: mqDeux(' fill="' + MQ.jaune + '" stroke="' + MQ.nuit + '" stroke-width="2.5" paint-order="stroke"'), esquisse: mqDeux(MQ.esq) },
+    { nom: "la flamme droite", seuil: 125, z: 3, peint: '<path d="' + MQ.flamme + '" fill="' + MQ.jaune + '"/>', esquisse: '<path d="' + MQ.flamme + '"' + MQ.esq + "/>" },
+    { nom: "la flamme gauche", seuil: 150, z: 3, peint: '<path d="' + MQ.flamme + '" fill="' + MQ.jaune + '"' + MQ.miroir + "/>", esquisse: '<path d="' + MQ.flamme + '"' + MQ.esq + MQ.miroir + "/>" },
+    { nom: "les rayures du front", seuil: 180, z: 2, peint: '<path d="' + MQ.rayures + '" fill="none" stroke="' + MQ.jaune + '" stroke-width="4" stroke-linecap="round"/>', esquisse: '<path d="' + MQ.rayures + '"' + MQ.esq + "/>" },
+    { nom: "l'étoile du menton", seuil: 215, z: 4, peint: '<polygon points="' + MQ.etoile + '" fill="' + MQ.jaune + '"/>', esquisse: '<polygon points="' + MQ.etoile + '"' + MQ.esq + "/>" },
+    { nom: "le cœur des flammes", seuil: 255, z: 3.5, peint: '<path d="' + MQ.coeur + '" fill="' + MQ.orange + '"/><path d="' + MQ.coeur + '" fill="' + MQ.orange + '"' + MQ.miroir + "/>",
+      esquisse: '<path d="' + MQ.coeur + '"' + MQ.esq + '/><path d="' + MQ.coeur + '"' + MQ.esq + MQ.miroir + "/>" },
+    { nom: "les aérations", seuil: 300, z: 4, peint: mqAerations(' fill="#0B0F0C"'), esquisse: mqAerations(MQ.esq) },
+    { nom: "le liseré de la grille", seuil: 350, z: 7, horsCoque: true, peint: '<path d="' + MQ.grille + '" fill="none" stroke="' + MQ.creme + '" stroke-width="3"/>' },
+    { nom: "les attaches", seuil: 410, z: 8, horsCoque: true, peint: mqAttaches(' fill="' + MQ.jaune + '" stroke="' + MQ.nuit + '" stroke-width="1.5"'), esquisse: mqAttaches(MQ.esq) },
+    { nom: "le liseré du casque", seuil: 480, z: 5, peint: '<path d="' + MQ.coque + '" fill="none" stroke="' + MQ.creme + '" stroke-width="7"/>', esquisse: '<path d="' + MQ.coque + '"' + MQ.esq + "/>" },
+    { nom: "la grille dorée", seuil: 560, z: 6.5, horsCoque: true, grille: true, peint: mqBarreaux("#E9C21A") },
+    { nom: "l'éclat du vernis", seuil: 650, z: 9, peint: '<path d="M46 46C58 28 80 18 102 15C84 24 66 36 56 54Z" fill="#fff" opacity=".38"/><path d="M168 30C178 38 186 50 190 64" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".25"/>' }
+  ];
+  function touchesPeintes(min) { var n = 0; MASQUE.forEach(function (z) { if (min >= z.seuil) n++; }); return n; }
+  // Le dessin : les touches peintes depuis « vus » s'animent l'une après l'autre
+  function masqueSVG(min, vus, id) {
+    var n = touchesPeintes(min), plans = [], k = 0;
+    MASQUE.forEach(function (z, i) {
+      var html = "";
+      if (i < n) {
+        var neuf = i >= vus;
+        if (neuf && z.esquisse) html += z.esquisse;
+        html += '<g class="touche' + (neuf ? " neuve" : "") + '"' + (neuf ? ' style="--d:' + (0.25 + 0.45 * k++).toFixed(2) + 's"' : "") + ">" + z.peint + "</g>";
+      } else if (z.esquisse) html = z.esquisse;
+      if (html) plans.push({ z: z.z, ou: z.grille ? "grille" : z.horsCoque ? "dessus" : z.z < 6 ? "coque" : "vernis", html: html });
+    });
+    plans.sort(function (a, b) { return a.z - b.z; });
+    function plan(ou) { return plans.filter(function (p) { return p.ou === ou; }).map(function (p) { return p.html; }).join(""); }
+    return '<svg class="masque" viewBox="0 0 220 260" role="img" aria-label="Ton masque de gardien, ' + n + " touches peintes sur " + MASQUE.length + '">' +
+      "<defs>" +
+      '<clipPath id="mq-coque-' + id + '"><path d="' + MQ.coque + '"/></clipPath>' +
+      '<clipPath id="mq-grille-' + id + '"><path d="' + MQ.grille + '"/></clipPath>' +
+      '<radialGradient id="mq-vol-' + id + '" cx="34%" cy="18%" r="85%"><stop offset="0" stop-color="#fff" stop-opacity=".24"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></radialGradient>' +
+      "</defs>" +
+      '<path d="' + MQ.coque + '" fill="' + MQ.resine + '" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>' +
+      '<g clip-path="url(#mq-coque-' + id + ')">' + plan("coque") + '<path d="' + MQ.coque + '" fill="url(#mq-vol-' + id + ')"/>' + "</g>" +
+      '<path d="' + MQ.grille + '" fill="#0A0F22"/>' +
+      '<ellipse cx="88" cy="114" rx="12" ry="6" fill="#18214A"/><ellipse cx="132" cy="114" rx="12" ry="6" fill="#18214A"/>' +
+      '<circle cx="92" cy="112" r="1.7" fill="#fff" opacity=".7"/><circle cx="136" cy="112" r="1.7" fill="#fff" opacity=".7"/>' +
+      '<g clip-path="url(#mq-grille-' + id + ')">' + mqBarreaux("#7F89A8") + plan("grille") + "</g>" +
+      plan("dessus") +
+      '<g clip-path="url(#mq-coque-' + id + ')">' + plan("vernis") + "</g>" +
+      "</svg>";
+  }
+  function prochaineTouche(min) { for (var i = 0; i < MASQUE.length; i++) if (min < MASQUE[i].seuil) return MASQUE[i]; return null; }
+
+  function ouvrirMasque() {
+    var tot = totalMinutes(), n = touchesPeintes(tot);
+    ouvrirFeuille('<h2 id="f-titre">Ton masque de gardien</h2>' +
+      '<p class="doux">Chaque minute le peint un peu plus, aux couleurs du SAGC. Les séances notées à l\'entraînement comptent aussi. Il ne se dépeint jamais, même après une pause.</p>' +
+      '<div class="masque-grand">' + masqueSVG(tot, n, "grand") + "</div>" +
+      '<div class="touches">' + MASQUE.map(function (z) {
+        var fait = tot >= z.seuil;
+        return '<div class="' + (fait ? "faite" : "") + '"><i>' + (fait ? ICO.coche : "") + "</i><span>" + esc(z.nom.charAt(0).toUpperCase() + z.nom.slice(1)) + "</span><b>" +
+          (fait ? z.seuil + " min" : "encore " + (z.seuil - tot) + " min") + "</b></div>";
+      }).join("") + "</div>");
+  }
+
+  // =====================================================================
   // ACCUEIL
   // =====================================================================
   var heros = { raf: 0, scene: null };
@@ -365,6 +462,15 @@
       P.PALIERS.map(function (q) { return '<i style="left:' + (q.a / 180 * 100) + '%"></i>'; }).join("") + "</div>" +
       '<div class="jauge-legende"><span>0°</span><span>90°</span><span>180°</span></div></div>';
 
+    // Le masque de gardien
+    var nT = touchesPeintes(tot), proch = prochaineTouche(tot), vusM = etat.vus.masque || 0;
+    h += '<div class="carte masque-carte apparait" style="--i:3"><button class="masque-btn" id="b-masque" aria-label="Voir ton masque en grand">' + masqueSVG(tot, vusM, "accueil") + "</button>" +
+      '<div class="masque-txt"><span class="etiquette">Ton masque</span><b>' + (nT ? nT + " touche" + (nT > 1 ? "s" : "") + " sur " + MASQUE.length : "Encore vierge") + "</b>" +
+      "<span>" + (proch ? "Prochaine : " + esc(proch.nom) + ", encore " + (proch.seuil - tot) + " min" : "Complet. Le masque de toute une saison.") + "</span>" +
+      '<p class="mini">Chaque minute le peint un peu plus. Rien ne s\'efface.</p></div></div>';
+    // Vu seulement si l'accueil est affiché : sinon l'animation attendra le retour sur l'accueil
+    if (nT !== vusM && v.classList.contains("active")) { etat.vus.masque = nT; sauver(); }
+
     // Installer sur l'écran d'accueil (une fois)
     var autonome = window.navigator.standalone === true || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
     if (!autonome && !etat.vus.installer) {
@@ -409,6 +515,7 @@
     if ($("#b-rink")) $("#b-rink").onclick = ouvrirBordRink;
     if ($("#b-avant")) $("#b-avant").onclick = function () { lancer("avantMatch", { energie: "normal", adducteur: "ok" }); };
     $("#b-mesurer").onclick = ouvrirMesure;
+    $("#b-masque").onclick = ouvrirMasque;
     if ($("#b-installer-ok")) $("#b-installer-ok").onclick = function () { etat.vus.installer = 1; sauver(); rendreAccueil(); };
     $$("[data-lancer]", v).forEach(function (b) {
       b.onclick = function () {
@@ -945,6 +1052,15 @@
     var apres = totalMinutes(), phA = P.phase(avant), phB = P.phase(apres);
     var pAv = phB.a ? borne((avant - phB.de) / (phB.a - phB.de) * 100, 0, 100) : 100;
     var pAp = phB.a ? borne((apres - phB.de) / (phB.a - phB.de) * 100, 0, 100) : 100;
+    // Les touches de masque gagnées ce soir
+    var mAv = touchesPeintes(avant), mAp = touchesPeintes(apres), carteMasque = "";
+    if (mAp > mAv) {
+      var neuves = MASQUE.slice(mAv, mAp).map(function (z) { return z.nom; });
+      carteMasque = '<div class="carte masque-carte masque-fin"><div class="masque-btn">' + masqueSVG(apres, mAv, "fin") + "</div>" +
+        '<div class="masque-txt"><span class="etiquette">Ton masque</span><b>' + (neuves.length > 1 ? neuves.length + " nouvelles touches" : "Nouvelle touche") + "</b>" +
+        "<span>" + esc(neuves.join(", ").replace(/^./, function (c) { return c.toUpperCase(); })) + "</span></div></div>";
+      etat.vus.masque = mAp; sauver();
+    }
     var fin = $("#fin");
     fin.innerHTML = '<div class="plein-int fin-int">' +
       '<svg class="coche" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52"/><path d="M38 62 l16 16 l30 -34"/></svg>' +
@@ -953,6 +1069,7 @@
       (phB.n > phA.n ? '<div class="deblocage"><span class="etiquette">Phase débloquée</span><b>Phase ' + phB.n + " · " + esc(phB.nom) + '</b><span class="doux">' + esc(phB.texte) + "</span></div>" : "") +
       '<div class="carte"><div class="ligne-titre"><span class="etiquette">Phase ' + phB.n + " · " + esc(phB.nom) + '</span><span class="doux" style="font-size:13px">' +
       (phB.a ? apres + " / " + phB.a + " min" : apres + " min") + '</span></div><div class="barre"><div id="fin-barre" style="width:' + pAv + '%"></div></div></div>' +
+      carteMasque +
       '<div class="carte"><span class="etiquette">Ton adducteur gauche, pendant la séance ?</span>' +
       '<div class="segmente" style="margin-top:10px"><button data-r="ras">Rien</button><button data-r="peu">Un peu</button><button data-r="tire">Ça a tiré</button></div>' +
       '<p class="note" id="fin-note"></p></div>' +

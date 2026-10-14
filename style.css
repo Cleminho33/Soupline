@@ -118,6 +118,26 @@ p { margin: 0; }
 .jauge i { position: absolute; top: -3px; width: 2px; height: 14px; border-radius: 2px; background: rgba(255, 255, 255, .22); }
 .jauge-legende { display: flex; justify-content: space-between; font-size: 11px; color: var(--pale); margin-top: 6px; }
 
+/* ---------- Le masque de gardien ---------- */
+.masque-carte { display: grid; grid-template-columns: 112px 1fr; gap: 16px; align-items: center; }
+.masque-btn { display: block; width: 112px; border-radius: 18px; padding: 6px 4px;
+  background: radial-gradient(70% 60% at 50% 45%, rgba(31, 157, 74, .16), transparent 75%); }
+.masque { width: 100%; height: auto; display: block; overflow: visible; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .45)); }
+.masque .neuve { animation: peint 1.1s cubic-bezier(.2, .8, .2, 1) both; animation-delay: var(--d, 0s); transform-box: fill-box; transform-origin: center; }
+@keyframes peint { 0% { opacity: 0; transform: scale(1.18); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+.masque-txt b { display: block; font-size: 18px; font-weight: 800; margin-top: 4px; }
+.masque-txt > span:not(.etiquette) { display: block; font-size: 14px; color: var(--doux); margin-top: 2px; }
+.masque-txt .mini { margin-top: 8px; }
+.masque-fin { width: 100%; text-align: left; }
+.masque-grand { width: 200px; margin: 6px auto 14px; }
+.touches { display: grid; gap: 2px; margin-bottom: 6px; }
+.touches > div { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 9px 4px; border-top: 1px solid var(--bord); font-size: 14.5px; color: var(--pale); }
+.touches > div.faite { color: var(--texte); }
+.touches i { width: 20px; height: 20px; color: var(--teal); }
+.touches i svg { width: 20px; height: 20px; display: block; }
+.touches b { font-weight: 600; font-size: 13px; color: var(--pale); white-space: nowrap; }
+.touches .faite b { color: var(--doux); }
+
 /* ---------- Ce soir ---------- */
 .soir-tete { display: flex; gap: 12px; align-items: center; }
 .soir-icone { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: rgba(140, 123, 255, .14); flex: none; }
