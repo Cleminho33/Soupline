@@ -122,6 +122,7 @@ p { margin: 0; }
 .soir-tete { display: flex; gap: 12px; align-items: center; }
 .soir-icone { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: rgba(140, 123, 255, .14); flex: none; }
 .soir-icone svg { width: 26px; height: 26px; }
+.soir-icone.rink-icone { background: rgba(255, 181, 71, .14); }
 .soir-tete b { display: block; font-size: 17px; }
 .soir-tete span { color: var(--doux); font-size: 14px; }
 .soir-detail { margin: 12px 0 14px; color: var(--doux); font-size: 15px; }

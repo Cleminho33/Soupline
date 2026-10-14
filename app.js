@@ -282,7 +282,8 @@
 
   // ---------- Vignettes : la position figée à son moment le plus parlant ----------
   var VIG_SEANCE = { plancher: "murV", plancherPlus: "papillonAllonge", calme: "rockback", standard: "ecart", pleine: "cosaque",
-    avantMatch: "balancier", redescente: "papillonAllonge", redescenteCourte: "murV", douleur: "squeeze", fitness: "soupir" };
+    avantMatch: "balancier", redescente: "papillonAllonge", redescenteCourte: "murV", douleur: "squeeze", fitness: "soupir", bordRink: "cosaque" };
+  var RINK = { echauffement: "bordRinkEchauffement", retour: "bordRinkRetour" };
   function vignette2D(el) {
     var X = P.EXOS[el.getAttribute("data-vig")], s = svgEl();
     el.innerHTML = ""; el.appendChild(s);
@@ -341,6 +342,14 @@
     h += '<button class="lien centre" id="b-ailleurs">' + (faits.length ? "Noter une autre séance faite ailleurs" : "Déjà fait à l'entraînement ? Note-le") + "</button>";
     h += "</div></div>";
 
+    // Soir d'entraînement : la routine à faire sur place
+    if (ctx.cle === "entrainement" || ctx.cle === "jeudi") {
+      var auRink = faits.some(function (s) { return /^bordRink/.test(s.cle); });
+      h += '<div class="carte apparait" style="--i:1"><div class="soir-tete"><span class="soir-icone rink-icone">' + ICO.crosse + "</span>" +
+        "<div><b>Au rink ce soir</b><span>" + (auRink ? "Routine bord de rink faite, bien joué." : "5 min debout, à l'échauffement ou au retour au calme") + "</span></div></div>" +
+        '<button class="bouton secondaire" id="b-rink" style="margin-top:14px">Routine bord de rink</button></div>';
+    }
+
     // Ton écart
     h += '<div class="carte heros apparait" style="--i:2">' +
       '<div class="heros-tete"><span class="etiquette">Ton écart</span><button class="lien" id="b-mesurer">' + (mesure ? "Nouvelle mesure" : "Mesurer mon point zéro") + "</button></div>" +
@@ -376,12 +385,13 @@
       ["plancher", "Plancher", "Cinq minutes allongé, même à plat"],
       ["redescente", "Redescente", "Après un match ou une journée lourde"],
       ["avantMatch", "Avant-match", "Dynamique, avant l'échauffement"],
+      ["bordRink", "Bord de rink", "Debout, sans tapis, à l'entraînement"],
       ["ailleurs", "Faite ailleurs", "Entraînement, Fitness+, étirements libres"]
     ];
     h += '<div class="carte apparait" style="--i:5"><span class="etiquette">Autres séances</span><div class="liste">' +
       autres.map(function (a) {
         var ailleurs = a[0] === "ailleurs";
-        var d = ailleurs ? "noter" : dureeTxt(P.construire(a[0], ctxSeance(false)).duree);
+        var d = ailleurs ? "noter" : dureeTxt(P.construire(a[0] === "bordRink" ? RINK.retour : a[0], ctxSeance(false)).duree);
         var vig = ailleurs ? '<span class="vig ico">' + ICO.crayon + "</span>" : '<span class="vig" data-vig="' + VIG_SEANCE[a[0]] + '"></span>';
         return '<button class="rangee" data-lancer="' + a[0] + '">' + vig + "<div><b>" + a[1] + "</b><span>" + a[2] + '</span></div><span class="duree">' + d + "</span></button>";
       }).join("") + "</div></div>";
@@ -396,13 +406,16 @@
 
     $("#b-seance").onclick = function () { ouvrirChoix(); };
     $("#b-ailleurs").onclick = ouvrirAilleurs;
+    if ($("#b-rink")) $("#b-rink").onclick = ouvrirBordRink;
     if ($("#b-avant")) $("#b-avant").onclick = function () { lancer("avantMatch", { energie: "normal", adducteur: "ok" }); };
     $("#b-mesurer").onclick = ouvrirMesure;
     if ($("#b-installer-ok")) $("#b-installer-ok").onclick = function () { etat.vus.installer = 1; sauver(); rendreAccueil(); };
     $$("[data-lancer]", v).forEach(function (b) {
       b.onclick = function () {
         var c = b.getAttribute("data-lancer");
-        if (c === "ailleurs") ouvrirAilleurs(); else lancer(c, { energie: "normal", adducteur: "ok" });
+        if (c === "ailleurs") ouvrirAilleurs();
+        else if (c === "bordRink") ouvrirBordRink();
+        else lancer(c, { energie: "normal", adducteur: "ok" });
       };
     });
   }
@@ -583,6 +596,45 @@
     majA();
   }
 
+  // La routine bord de rink : à suivre guidée, ou de mémoire puis notée en un tap
+  function ouvrirBordRink() {
+    var d = new Date(), m = { moment: d.getHours() * 60 + d.getMinutes() >= 20 * 60 + 30 ? "retour" : "echauffement", add: "ok" };
+    var f = ouvrirFeuille(
+      '<h2 id="f-titre">Bord de rink</h2>' +
+      '<p class="doux">Cinq minutes debout, sans tapis, mains sur la bande ou le banc. En chaussures, pas en patins.</p>' +
+      '<div class="segmente" id="k-moment"><button data-k="echauffement">Échauffement</button><button data-k="retour">Retour au calme</button></div>' +
+      '<p class="note" id="k-note"></p>' +
+      '<div class="bloc-add"><span>Ton adducteur gauche</span><div class="segmente" id="k-add"><button data-a="ok">Tranquille</button><button data-a="sent">Se fait sentir</button></div></div>' +
+      '<div class="liste" id="k-liste"></div>' +
+      '<div class="duo" style="margin-top:16px"><button class="bouton" id="k-guide"></button><button class="bouton secondaire" id="k-fait"></button></div>' +
+      '<p class="mini" style="text-align:center">Pas le temps de sortir le téléphone ? Fais-la de mémoire, et note-la ensuite.</p>');
+    function majK() {
+      var s = P.construire(RINK[m.moment], ctxSeance(m.add === "sent"));
+      $$("#k-moment button", f).forEach(function (b) { b.classList.toggle("choisi", b.getAttribute("data-k") === m.moment); });
+      $$("#k-add button", f).forEach(function (b) { b.classList.toggle("choisi", b.getAttribute("data-a") === m.add); });
+      $("#k-note").textContent = (m.moment === "echauffement"
+        ? "Juste avant l'effort, on bouge sans rien tenir longtemps : les longues tenues coupent un peu d'explosivité."
+        : "Tu sors de l'entraînement, muscles chauds : le meilleur moment pour gagner des degrés.") +
+        (m.add === "sent" ? " Côté gauche moins loin, et toujours en second." : "");
+      $("#k-liste").innerHTML = s.etapes.map(function (e) {
+        return '<div class="rangee"><span class="vig" data-vig="' + e.id + '"></span><div><b>' + esc(e.nom) + "</b><span>" + esc(e.memo) + '</span></div><span class="duree">' + dureeTxt(e.duree) + "</span></div>";
+      }).join("");
+      remplirVignettes($("#k-liste"));
+      $("#k-guide").textContent = "Guide-moi · " + dureeTxt(s.duree);
+      $("#k-fait").textContent = "Je l'ai faite · noter " + dureeTxt(s.duree);
+    }
+    $$("#k-moment button", f).forEach(function (b) { b.onclick = function () { m.moment = b.getAttribute("data-k"); majK(); }; });
+    $$("#k-add button", f).forEach(function (b) { b.onclick = function () { m.add = b.getAttribute("data-a"); majK(); }; });
+    $("#k-guide").onclick = function () { fermerFeuille(); lancer(RINK[m.moment], { energie: "normal", adducteur: m.add }); };
+    $("#k-fait").onclick = function () {
+      var s = P.construire(RINK[m.moment], ctxSeance(false)), min = Math.max(1, Math.round(s.duree / 60));
+      noter({ cle: RINK[m.moment], nom: s.nom, min: min, sec: min * 60, complet: true, manuel: true, lieu: "entrainement", add: m.add });
+      fermerFeuille(); rendreTout();
+      toast("Noté : " + min + " min au bord du rink. Ça compte.");
+    };
+    majK();
+  }
+
   // =====================================================================
   // LECTEUR DE SÉANCE
   // =====================================================================
@@ -662,7 +714,8 @@
     var puce = $("#l-cote");
     puce.textContent = g.nomCote ? g.nomCote + (g.cote === "G" && LEC.opts.adducteur === "sent" ? " · en douceur" : "") : "";
     puce.classList.toggle("doux-g", g.cote === "G");
-    $("#l-consigne").textContent = g.type === "prep" ? X.consignes[0] : X.consignes[1];
+    var C = g.consignes || X.consignes;
+    $("#l-consigne").textContent = g.type === "prep" ? C[0] : C[1];
     $("#lecteur").setAttribute("data-type", g.type || (g.souffle || g.sp ? "souffle" : "mouvement"));
     $("#lecteur").classList.toggle("en-prep", g.type === "prep" && LEC.compte <= 0);
     LEC.decompte = -1;

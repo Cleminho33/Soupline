@@ -125,6 +125,8 @@ var PROG = (function () {
       nom: "Écart debout", pose: "ecart", vig: { angle: 84 },
       consignes: ["Jambes écartées, pointes de pieds vers l'avant, mains sur un appui : chaise basse, pouf ou piles de livres.",
         "Pousse les pieds dans le sol comme pour les rapprocher, 5 secondes. Relâche en expirant et laisse glisser d'un centimètre."],
+      consignesRink: ["Jambes écartées, pointes de pieds vers l'avant, mains sur la bande ou le banc.",
+        "Pousse les pieds dans le sol comme pour les rapprocher, 5 secondes. Relâche en expirant et laisse glisser d'un centimètre."],
       pourquoi: "Ton grand écart, travaillé là où se trouve le frein.",
       segments: function (o, ctx) {
         var a0 = ctx.angleDepart, a1 = a0 + (ctx.prudence ? 6 : 10), base = { a0: a0, a1: a1 };
@@ -165,6 +167,8 @@ var PROG = (function () {
       nom: "Fente cosaque", pose: "cosaque", vig: { v: -0.85 },
       consignes: ["Pieds très écartés. Descends sur une jambe, l'autre reste tendue, pointe vers le haut.",
         "Talons au sol, tiens un montant de porte si besoin. Lent en descendant."],
+      consignesRink: ["Pieds très écartés. Descends sur une jambe, l'autre reste tendue, pointe vers le haut.",
+        "Talons au sol, une main sur la bande si besoin. Lent en descendant."],
       pourquoi: "De la force jambes ouvertes : le cerveau lâche l'amplitude où tu es solide.",
       segments: function (o, ctx) {
         var n = o.reps || 5, out = [];
@@ -295,7 +299,16 @@ var PROG = (function () {
       { nom: "Redescendre", etapes: [["soupir", { cycles: 4 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] }, BLOC_PLUS_BAS] },
     redescenteCourte: { nom: "Redescente courte", sous: "Cinq minutes, allongé.", blocs: [
       { nom: "Redescendre", etapes: [["soupir", { cycles: 3 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] }, BLOC_PLUS_BAS] },
-    douleur: { nom: "Plancher prudence", sous: "On entretient sans solliciter l'aine.", etapes: [["soupir", { cycles: 5 }], ["squeeze", { reps: 3, doux: true }], ["murV", { duree: 150, angle: 26 }]] }
+    douleur: { nom: "Plancher prudence", sous: "On entretient sans solliciter l'aine.", etapes: [["soupir", { cycles: 5 }], ["squeeze", { reps: 3, doux: true }], ["murV", { duree: 150, angle: 26 }]] },
+    // Au bord du rink, debout et sans tapis, mains sur la bande : avant l'effort on bouge, après on ouvre
+    bordRinkEchauffement: { nom: "Bord de rink · échauffement", sous: "On bouge, on ne tient rien longtemps.", etapes: [
+      ["balancier", { reps: 20, rink: true, memo: "20 balancements par jambe" }],
+      ["cosaque", { reps: 12, dyn: true, rink: true, memo: "12 passages d'un côté à l'autre, sans t'arrêter en bas" }],
+      ["cavalier", { series: 3, tenue: 20, pulse: true, rink: true, memo: "3 fois 20 s de petits rebonds en bas" }]] },
+    bordRinkRetour: { nom: "Bord de rink · retour au calme", sous: "Muscles chauds : le meilleur moment pour gagner des degrés.", etapes: [
+      ["cosaque", { reps: 4, rink: true, memo: "4 descentes lentes de chaque côté" }],
+      ["cavalier", { series: 2, tenue: 20, rink: true, memo: "2 fois 20 s en bas, genoux ouverts" }],
+      ["ecart", { cycles: 3, fin: 40, rink: true, memo: "3 contracter-relâcher, puis 40 s de tenue" }]] }
   };
   function blocs(cle) { var S = SEANCES[cle]; return S.blocs || [{ nom: S.nom, etapes: S.etapes }]; }
 
@@ -311,15 +324,19 @@ var PROG = (function () {
       cotes.forEach(function (cote, ci) {
         var segs = X.segments(o, ctx, cote), premier = segs[0];
         if (tp !== 1) segs.forEach(function (s) { s.d = Math.round(s.d * tp * 10) / 10; });
-        var nomCote = cote ? X.coteNom[cote] : null;
-        var voix = ci === 0 ? X.nom + ". " + X.consignes[0] + (cote ? " " + nomCote + " d'abord." : "")
+        // Au bord du rink, les consignes parlent de la bande plutôt que des meubles de la maison
+        var nomCote = cote ? X.coteNom[cote] : null, cons = (o.rink && X.consignesRink) || X.consignes;
+        var voix = ci === 0 ? X.nom + ". " + cons[0] + (cote ? " " + nomCote + " d'abord." : "")
           : nomCote + (cote === "G" && ctx.prudence ? ", en douceur." : ".");
         out.push({ d: ci === 0 ? 12 : 7, pose: premier.pose, de: premier.de, a: premier.de, type: "prep",
           label: ci === 0 ? "En place" : "Change de côté", voix: voix });
         segs.forEach(function (s) { out.push(s); });
-        for (var i = out.length - segs.length - 1; i < out.length; i++) { out[i].exo = id; out[i].cote = cote; out[i].nomCote = nomCote; out[i].etape = etapes.length; }
+        for (var i = out.length - segs.length - 1; i < out.length; i++) {
+          out[i].exo = id; out[i].cote = cote; out[i].nomCote = nomCote; out[i].etape = etapes.length;
+          if (cons !== X.consignes) out[i].consignes = cons;
+        }
       });
-      etapes.push({ id: id, nom: X.nom, debut: debut, fin: out.length, duree: somme(out.slice(debut)) });
+      etapes.push({ id: id, nom: X.nom, debut: debut, fin: out.length, duree: somme(out.slice(debut)), memo: o.memo || "" });
     });
     return { cle: cle, nom: S.nom, sous: S.sous, bloc: n || 0, nbBlocs: B.length, nomBloc: b.nom, sousBloc: b.sous || "",
       segments: out, etapes: etapes, duree: somme(out) };
