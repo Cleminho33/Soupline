@@ -10,6 +10,7 @@
   var MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
   var MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
   var FIN_VOIX = "C'est fait. Ce soir compte.";
+  var BLOC_VOIX = "Cinq minutes, c'est fait. Ça compte déjà.";
   var TEST_VOIX = "Inspire par le nez. Et expire, longuement. Vise six sur dix, jamais la douleur.";
 
   // ---------- Outils ----------
@@ -526,8 +527,10 @@
     $$(".energie", f).forEach(function (b) {
       var e = b.getAttribute("data-e"), on = e === choix.energie;
       b.classList.toggle("choisie", on); b.setAttribute("aria-checked", on);
-      var s = P.construire(P.choisir(ctx.cle, e, choix.adducteur), ctxSeance(prudence));
-      $("[data-duree]", b).textContent = dureeTxt(s.duree);
+      // Durée du premier bloc, et jusqu'où on peut aller en le rallongeant
+      var cleE = P.choisir(ctx.cle, e, choix.adducteur), s = P.construire(cleE, ctxSeance(prudence)), max = 0;
+      for (var k = 0; k < s.nbBlocs; k++) max += P.construire(cleE, ctxSeance(prudence), k).duree;
+      $("[data-duree]", b).textContent = s.nbBlocs > 1 ? Math.max(1, Math.round(s.duree / 60)) + " à " + dureeTxt(max) : dureeTxt(s.duree);
     });
     $$("#f-add button", f).forEach(function (b) { b.classList.toggle("choisi", b.getAttribute("data-a") === choix.adducteur); });
     $$("#f-tempo button", f).forEach(function (b) { b.classList.toggle("choisi", +b.getAttribute("data-t") === (etat.reglages.tempo || 1)); });
@@ -543,7 +546,8 @@
       (!etat.seances.length && choix.energie === "plat" ? " Parfait pour un premier soir." : "") + '</p><div class="etapes">' +
       s.etapes.map(function (e) {
         return '<div class="etape"><span class="vig" data-vig="' + e.id + '"></span><b>' + esc(e.nom) + "</b><span>" + dureeTxt(e.duree) + "</span></div>";
-      }).join("") + "</div>";
+      }).join("") + "</div>" +
+      (s.nbBlocs > 1 ? '<p class="rallonge-info">Ensuite, seulement si tu en as envie : un bloc de plus, jusqu\'à ' + (s.nbBlocs - 1) + " fois. Tu choisis à la fin de chaque bloc.</p>" : "");
     remplirVignettes(ap);
     $("#f-go").textContent = "C'est parti · " + dureeTxt(s.duree);
   }
@@ -611,11 +615,12 @@
     }
   }
 
+  // opts.bloc : le bloc de 5 minutes à jouer ; opts.entree et opts.avant suivent la soirée d'un bloc à l'autre
   function lancer(cle, opts) {
     var prudence = opts.adducteur === "sent", lec = $("#lecteur");
-    var s = P.construire(cle, ctxSeance(prudence));
+    var s = P.construire(cle, ctxSeance(prudence), opts.bloc || 0);
     recalculer(s);
-    LEC = { en: true, pause: false, s: s, cle: cle, opts: opts, i: 0, t: 0, fait: 0, souffleT: 0, phaseSouffle: null, etape: -1,
+    LEC = { en: true, pause: false, s: s, cle: cle, opts: opts, bloc: s.bloc, i: 0, t: 0, fait: 0, souffleT: 0, phaseSouffle: null, etape: -1,
       last: performance.now(), raf: 0, compte: 3, decompte: -1, tempo: etat.reglages.tempo || 1, en3d: false, cleVue: null };
     if (F3) {
       try {
@@ -626,14 +631,14 @@
       } catch (e) { lec.classList.remove("en3d"); }
     } else lec.classList.remove("en3d");
     if (!LEC.en3d) { var svg = $("#l-svg"); svg.innerHTML = ""; LEC.scene = new F.Scene(svg); }
-    $("#l-seance").textContent = s.nom;
+    $("#l-seance").textContent = s.bloc ? s.nomBloc + " · en plus" : s.nom;
     $("#l-barre").innerHTML = s.etapes.map(function (e) { return '<i style="flex:' + e.duree.toFixed(1) + '"></i>'; }).join("");
     majVoixBouton();
     $("#l-pause").innerHTML = ICO.pause; $("#l-pause").setAttribute("aria-label", "Pause");
     $("#l-astuce").classList.toggle("vu", LEC.en3d && !etat.vus.tourner);
     lec.classList.add("ouvert");
     VOIX.debloquer(); SON.debloquer(); garderEcran();
-    VOIX.precharger(s.segments.map(function (g) { return g.voix; }).concat([FIN_VOIX]));
+    VOIX.precharger(s.segments.map(function (g) { return g.voix; }).concat([FIN_VOIX, BLOC_VOIX]));
     entrer(0, true);
     dessinerLecteur();
     LEC.raf = requestAnimationFrame(boucle);
@@ -793,6 +798,7 @@
       cle: o.cle, nom: o.nom, min: Math.max(1, o.min), sec: o.sec || 0, complet: !!o.complet, add: o.add || "ok"
     };
     if (o.manuel) { e.manuel = true; e.lieu = o.lieu; }
+    if (o.blocs) e.blocs = o.blocs;
     var i = etat.seances.length;
     while (i > 0 && etat.seances[i - 1].d > j) i--;
     etat.seances.splice(i, 0, e);
@@ -807,20 +813,67 @@
     $("#lecteur").classList.remove("ouvert", "en-prep");
     $("#l-compte").innerHTML = "";
   }
+  // Fin d'un bloc : la soirée est notée tout de suite (une seule ligne, qui grossit à chaque bloc),
+  // puis « Encore 5 min ? » s'il reste un bloc, sinon l'écran de fin
   function terminer(complet) {
     if (!LEC.en) return;
     VOIX.couper();
     fermerLecteur();
-    var sec = LEC.fait, min = Math.max(1, Math.round(sec / 60));
-    var avant = totalMinutes();
-    var entree = noter({ cle: LEC.cle, nom: LEC.s.nom, min: min, sec: Math.round(sec), complet: complet, add: LEC.opts.adducteur });
+    var o = LEC.opts, sec = Math.round(LEC.fait), entree = o.entree;
+    var avant = o.avant != null ? o.avant : totalMinutes();
+    if (entree) {
+      entree.sec += sec; entree.min = Math.max(1, Math.round(entree.sec / 60));
+      entree.blocs = (entree.blocs || 1) + 1; entree.complet = entree.complet || complet;
+      sauver();
+    } else entree = noter({ cle: LEC.cle, nom: LEC.s.nom, min: Math.max(1, Math.round(sec / 60)), sec: sec, complet: complet, add: o.adducteur, blocs: 1 });
+    var suite = complet ? blocSuivant(LEC.cle, LEC.bloc, o.adducteur === "sent") : null;
+    if (suite) { SON.fin(); VOIX.dire(BLOC_VOIX); afficherRallonge(suite, entree, avant); return; }
     if (complet) { SON.fin(); VOIX.dire(FIN_VOIX); }
-    afficherFin(complet, min, avant, entree);
+    afficherFin(entree.complet, entree.min, avant, entree);
   }
   function arreter() {
     if (!LEC.en) return;
-    if (LEC.fait < 45) { VOIX.couper(); fermerLecteur(); rendreTout(); return; }
+    if (LEC.fait < 45) {
+      VOIX.couper(); fermerLecteur();
+      // Arrêté juste après avoir relancé : les blocs déjà faits restent acquis
+      if (LEC.opts.entree) afficherFin(true, LEC.opts.entree.min, LEC.opts.avant, LEC.opts.entree);
+      else rendreTout();
+      return;
+    }
     terminer(false);
+  }
+  function blocSuivant(cle, n, prudence) {
+    for (var k = n + 1; k < P.blocs(cle).length; k++) {
+      var s = P.construire(cle, ctxSeance(prudence), k);
+      if (s.segments.length) return s;
+    }
+    return null;
+  }
+
+  // =====================================================================
+  // ENCORE 5 MIN ? (entre deux blocs)
+  // =====================================================================
+  function afficherRallonge(suite, entree, avant) {
+    var fin = $("#fin"), opts = LEC.opts, cle = LEC.cle;
+    fin.innerHTML = '<div class="plein-int fin-int">' +
+      '<svg class="coche" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52"/><path d="M38 62 l16 16 l30 -34"/></svg>' +
+      "<h2>" + entree.min + " minutes. C'est fait.</h2>" +
+      '<p class="fin-phrase">Ça compte déjà. Tu peux t\'arrêter là sans rien perdre, ou continuer un peu.</p>' +
+      '<div class="carte rallonge"><span class="etiquette">Encore ' + dureeTxt(suite.duree) + " ?</span>" +
+      "<b>" + esc(suite.nomBloc) + "</b>" + (suite.sousBloc ? '<p class="doux">' + esc(suite.sousBloc) + "</p>" : "") +
+      '<div class="etapes">' + suite.etapes.map(function (e) {
+        return '<div class="etape"><span class="vig" data-vig="' + e.id + '"></span><b>' + esc(e.nom) + "</b><span>" + dureeTxt(e.duree) + "</span></div>";
+      }).join("") + "</div></div>" +
+      '<div class="duo" style="width:100%"><button class="bouton" id="r-encore">Encore ' + dureeTxt(suite.duree) + '</button>' +
+      '<button class="bouton secondaire" id="r-stop">Je m\'arrête là</button></div></div>';
+    fin.classList.add("ouvert");
+    fin.scrollTop = 0;
+    remplirVignettes(fin);
+    $("#r-encore").onclick = function () {
+      fin.classList.remove("ouvert");
+      lancer(cle, Object.assign({}, opts, { bloc: suite.bloc, entree: entree, avant: avant }));
+    };
+    $("#r-stop").onclick = function () { VOIX.dire(FIN_VOIX); afficherFin(true, entree.min, avant, entree); };
   }
 
   // =====================================================================
@@ -1022,7 +1075,7 @@
     var se = etat.seances.slice(-12).reverse();
     h += '<div class="carte apparait" style="--i:3"><div class="ligne-titre"><span class="etiquette">Tes dernières séances</span><button class="lien" id="p-ailleurs">+ Faite ailleurs</button></div>' +
       (se.length ? '<table class="tableau"><tbody>' + se.map(function (s) {
-        return "<tr><td>" + dateCourte(s.d) + '</td><td class="doux">' + esc(s.nom) + (s.manuel ? " · notée" : s.complet ? "" : " · arrêtée") + '</td><td class="num">' + s.min +
+        return "<tr><td>" + dateCourte(s.d) + '</td><td class="doux">' + esc(s.nom) + (s.manuel ? " · notée" : s.complet ? "" : " · arrêtée") + (s.blocs > 1 ? " · " + s.blocs + " blocs" : "") + '</td><td class="num">' + s.min +
           ' min</td><td class="act"><button data-seance="' + etat.seances.indexOf(s) + '" aria-label="Supprimer la séance du ' + dateCourte(s.d) + '">×</button></td></tr>';
       }).join("") + "</tbody></table>" : '<div class="vide">Ta première séance apparaîtra ici.</div>') + "</div>";
     v.innerHTML = h;
@@ -1292,6 +1345,6 @@
   window.SOUPLINE = {
     etat: function () { return etat; }, lancer: lancer, terminer: terminer, LEC: function () { return LEC; },
     en3d: function () { return !!F3; },
-    textesVoix: function () { return P.textesVoix([FIN_VOIX, TEST_VOIX]); }
+    textesVoix: function () { return P.textesVoix([FIN_VOIX, BLOC_VOIX, TEST_VOIX]); }
   };
 })();

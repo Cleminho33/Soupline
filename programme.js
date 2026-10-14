@@ -267,22 +267,43 @@ var PROG = (function () {
   };
 
   // ---------- Les séances ----------
+  // Séance à rallonge : chaque séance se joue par blocs d'environ 5 minutes. Le premier se suffit à
+  // lui-même ; à la fin de chacun, l'app propose « Encore 5 min ? », jamais plus d'un bloc à la fois.
+  // Un bloc qui peut être le dernier finit au calme quand c'est possible (papillon allongé, mur en V).
+  var BLOC_HANCHES = { nom: "Les hanches", etapes: [["squeeze", { reps: 5 }], ["grenouille", { rocks: 6, tenue: 40 }], ["papillon", { cycles: 2 }], ["papillonAllonge", { duree: 40 }]] };
+  var BLOC_ECART = { nom: "Deuxième passage à l'écart", sous: "Échauffé, tu vas souvent plus loin.", etapes: [["ecart", { cycles: 3, fin: 30 }], ["murV", { duree: 150 }]] };
+  var BLOC_PLUS_BAS = { nom: "Encore plus bas", etapes: [["soupir", { cycles: 3 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] };
   var SEANCES = {
-    plancher: { nom: "Plancher", sous: "Cinq minutes allongé. Même à plat, ça compte.", etapes: [["soupir", { cycles: 3 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] },
-    plancherPlus: { nom: "Plancher +", sous: "Allongé, sans effort.", etapes: [["soupir", { cycles: 3 }], ["squeeze", { reps: 4 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] },
-    calme: { nom: "Séance calme", sous: "On ouvre sans rien forcer.", etapes: [["soupir", { cycles: 3 }], ["squeeze", { reps: 4 }], ["rockback", { reps: 6 }], ["papillonAllonge", { duree: 60 }], ["ecart", { cycles: 0, fin: 50 }], ["murV", { duree: 120 }]] },
-    standard: { nom: "Séance standard", sous: "Le cœur du programme.", etapes: [["soupir", { cycles: 3 }], ["squeeze", { reps: 5 }], ["rockback", { reps: 8 }], ["grenouille", { rocks: 8, tenue: 45 }], ["papillon", { cycles: 3 }], ["ecart", { cycles: 3, fin: 30 }], ["murV", { duree: 120 }]] },
-    pleine: { nom: "Séance pleine", sous: "De la force jambes ouvertes, puis on ouvre.", etapes: [["soupir", { cycles: 3 }], ["squeeze", { reps: 5 }], ["cosaque", { reps: 5 }], ["copenhague", { series: 2, tenue: 15 }], ["cavalier", { series: 2, tenue: 20 }], ["glissade", { reps: 5, phaseMin: 2 }], ["grenouille", { rocks: 8, tenue: 45 }], ["ecart", { cycles: 4, fin: 40 }], ["papillon", { cycles: 3 }], ["murV", { duree: 120 }]] },
+    plancher: { nom: "Plancher", sous: "Cinq minutes allongé. Même à plat, ça compte.", blocs: [
+      { nom: "Allongé", etapes: [["soupir", { cycles: 3 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] },
+      { nom: "Les hanches, en douceur", etapes: [["squeeze", { reps: 4 }], ["rockback", { reps: 6 }], ["murV", { duree: 120 }]] }] },
+    plancherPlus: { nom: "Plancher +", sous: "Allongé, sans effort.", blocs: [
+      { nom: "Allongé", etapes: [["soupir", { cycles: 3 }], ["squeeze", { reps: 4 }], ["papillonAllonge", { duree: 45 }], ["murV", { duree: 120 }]] },
+      { nom: "Les hanches, en douceur", etapes: [["rockback", { reps: 6 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 120 }]] }] },
+    calme: { nom: "Séance calme", sous: "On ouvre sans rien forcer.", blocs: [
+      { nom: "Ouvrir doucement", etapes: [["soupir", { cycles: 3 }], ["rockback", { reps: 6 }], ["papillonAllonge", { duree: 45 }], ["murV", { duree: 90 }]] },
+      { nom: "L'écart, sans forcer", etapes: [["squeeze", { reps: 4 }], ["ecart", { cycles: 0, fin: 50 }], ["papillonAllonge", { duree: 40 }], ["murV", { duree: 120 }]] }] },
+    standard: { nom: "Séance standard", sous: "Le cœur du programme.", blocs: [
+      { nom: "L'essentiel", etapes: [["soupir", { cycles: 3 }], ["rockback", { reps: 6 }], ["ecart", { cycles: 2, fin: 20 }], ["murV", { duree: 60 }]] },
+      BLOC_HANCHES, BLOC_ECART] },
+    pleine: { nom: "Séance pleine", sous: "De la force jambes ouvertes, puis on ouvre.", blocs: [
+      { nom: "L'essentiel", etapes: [["soupir", { cycles: 3 }], ["cosaque", { reps: 4 }], ["ecart", { cycles: 2, fin: 20 }], ["murV", { duree: 75 }]] },
+      { nom: "La force jambes ouvertes", etapes: [["copenhague", { series: 2, tenue: 15 }], ["cavalier", { series: 2, tenue: 20 }], ["glissade", { reps: 4, phaseMin: 2 }], ["papillonAllonge", { duree: 40 }]] },
+      BLOC_HANCHES, BLOC_ECART] },
     avantMatch: { nom: "Avant-match", sous: "Dynamique, rien de long. Avant l'échauffement.", etapes: [["soupir", { cycles: 2 }], ["balancier", { reps: 12 }], ["cosaque", { reps: 8, dyn: true }], ["rockback", { reps: 8, dyn: true }], ["cavalier", { series: 1, tenue: 20, pulse: true }]] },
-    redescente: { nom: "Redescente", sous: "Après le match, on fait retomber la pression.", etapes: [["soupir", { cycles: 5 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 180 }]] },
-    redescenteCourte: { nom: "Redescente courte", sous: "Cinq minutes, allongé.", etapes: [["soupir", { cycles: 3 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] },
+    redescente: { nom: "Redescente", sous: "Après le match, on fait retomber la pression.", blocs: [
+      { nom: "Redescendre", etapes: [["soupir", { cycles: 4 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] }, BLOC_PLUS_BAS] },
+    redescenteCourte: { nom: "Redescente courte", sous: "Cinq minutes, allongé.", blocs: [
+      { nom: "Redescendre", etapes: [["soupir", { cycles: 3 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] }, BLOC_PLUS_BAS] },
     douleur: { nom: "Plancher prudence", sous: "On entretient sans solliciter l'aine.", etapes: [["soupir", { cycles: 5 }], ["squeeze", { reps: 3, doux: true }], ["murV", { duree: 150, angle: 26 }]] }
   };
+  function blocs(cle) { var S = SEANCES[cle]; return S.blocs || [{ nom: S.nom, etapes: S.etapes }]; }
 
-  // Une séance prête à jouer. ctx.tempo ralentit tout sauf les mises en place (1, 1.25 ou 1.5)
-  function construire(cle, ctx) {
-    var S = SEANCES[cle], out = [], etapes = [], tp = ctx.tempo || 1;
-    S.etapes.forEach(function (e) {
+  // Un bloc de séance prêt à jouer (le premier si n est absent).
+  // ctx.tempo ralentit tout sauf les mises en place (1, 1.25 ou 1.5)
+  function construire(cle, ctx, n) {
+    var S = SEANCES[cle], B = blocs(cle), b = B[n || 0], out = [], etapes = [], tp = ctx.tempo || 1;
+    b.etapes.forEach(function (e) {
       var id = e[0], o = e[1] || {}, X = EXOS[id];
       if (o.phaseMin && ctx.phase < o.phaseMin) return;
       if (o.phaseMax && ctx.phase > o.phaseMax) return;
@@ -300,7 +321,8 @@ var PROG = (function () {
       });
       etapes.push({ id: id, nom: X.nom, debut: debut, fin: out.length, duree: somme(out.slice(debut)) });
     });
-    return { cle: cle, nom: S.nom, sous: S.sous, segments: out, etapes: etapes, duree: somme(out) };
+    return { cle: cle, nom: S.nom, sous: S.sous, bloc: n || 0, nbBlocs: B.length, nomBloc: b.nom, sousBloc: b.sous || "",
+      segments: out, etapes: etapes, duree: somme(out) };
   }
 
   // ---------- La saison N2 2026-2027 ----------
@@ -400,7 +422,9 @@ var PROG = (function () {
     Object.keys(SEANCES).forEach(function (cle) {
       [1, 2, 3].forEach(function (ph) {
         [false, true].forEach(function (pru) {
-          construire(cle, reglages(80, pru, ph)).segments.forEach(function (g) { if (g.voix) vus[g.voix] = 1; });
+          blocs(cle).forEach(function (b, n) {
+            construire(cle, reglages(80, pru, ph), n).segments.forEach(function (g) { if (g.voix) vus[g.voix] = 1; });
+          });
         });
       });
     });
@@ -409,7 +433,7 @@ var PROG = (function () {
   }
 
   return {
-    EXOS: EXOS, SEANCES: SEANCES, MATCHS: MATCHS, PHASES: PHASES, PALIERS: PALIERS, textesVoix: textesVoix,
+    EXOS: EXOS, SEANCES: SEANCES, MATCHS: MATCHS, PHASES: PHASES, PALIERS: PALIERS, textesVoix: textesVoix, blocs: blocs,
     construire: construire, contexte: contexte, choisir: choisir, phase: phase, palierSuivant: palierSuivant,
     reglages: reglages, iso: iso, prochainMatch: prochainMatch, JOURS: JOURS
   };
