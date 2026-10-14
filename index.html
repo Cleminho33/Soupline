@@ -10,6 +10,13 @@
 <meta name="apple-mobile-web-app-title" content="Soupline">
 <meta name="description" content="L'assouplissant du gardien. Grand écart facial : séances guidées du soir, adaptées à l'énergie et au calendrier des matchs.">
 <title>Soupline</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icone-180.png">
 <link rel="icon" type="image/png" href="icone-192.png">
@@ -75,7 +82,23 @@
     <button class="rond" id="l-voix" aria-label="Voix"></button>
   </div>
   <div class="l-titre"><h2 id="l-nom"></h2><span class="puce" id="l-cote"></span></div>
-  <div class="l-scene"><svg id="l-svg" aria-hidden="true"></svg><span class="l-vue" id="l-vue"></span><div class="compte" id="l-compte"></div></div>
+  <div class="l-scene">
+    <svg id="l-svg" aria-hidden="true"></svg>
+    <div class="l-3d" id="l-3d" aria-hidden="true"></div>
+    <span class="l-vue" id="l-vue"></span>
+    <div class="l-vues" id="l-vues" role="group" aria-label="Angle de vue">
+      <button data-v="exo">Exercice</button><button data-v="face">Face</button><button data-v="cote">Côté</button><button data-v="dessus">Dessus</button>
+    </div>
+    <div class="l-astuce" id="l-astuce">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 4 0 0 0 18 0"/><path d="M18 15l3-3-3-3"/></svg>
+      Glisse pour tourner
+    </div>
+    <div class="compte" id="l-compte"></div>
+    <div class="l-prep">
+      <button id="l-plus">+15 s</button>
+      <button id="l-pret">Je suis prêt</button>
+    </div>
+  </div>
   <div class="l-bas">
     <div class="anneau">
       <svg viewBox="0 0 120 120" aria-hidden="true">
@@ -83,7 +106,7 @@
         <circle class="fond-a" cx="60" cy="60" r="54" fill="none" stroke-width="7"/>
         <circle class="arc" id="l-arc" cx="60" cy="60" r="54" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
       </svg>
-      <div class="anneau-texte" aria-live="polite"><b id="l-label"></b><span id="l-sous"></span></div>
+      <div class="anneau-texte" aria-live="polite"><b id="l-label"></b><i id="l-chiffre"></i><span id="l-sous"></span></div>
     </div>
     <p class="l-consigne" id="l-consigne"></p>
     <div class="l-controles">

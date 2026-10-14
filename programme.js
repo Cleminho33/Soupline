@@ -45,9 +45,9 @@ var PROG = (function () {
         var n = o.cycles || 3, out = [];
         for (var i = 0; i < n; i++) {
           var r = (i + 1) + "/" + n, un = i === 0;
-          out.push(seg(2.2, "tailleur", { s: 0 }, { s: 0.72 }, { sp: true, label: "Inspire", rep: r, voix: un ? "Inspire par le nez." : null, son: "inspire" }));
-          out.push(seg(1.2, "tailleur", { s: 0.72 }, { s: 1 }, { sp: true, label: "Encore un peu", rep: r, voix: un ? "Encore un peu." : null }));
-          out.push(seg(6, "tailleur", { s: 1 }, { s: 0 }, { sp: true, label: "Expire longuement", rep: r, voix: un ? "Et expire, longuement, par la bouche." : null, son: "expire" }));
+          out.push(seg(3, "tailleur", { s: 0 }, { s: 0.72 }, { sp: true, label: "Inspire", rep: r, voix: un ? "Inspire par le nez." : null, son: "inspire" }));
+          out.push(seg(1.6, "tailleur", { s: 0.72 }, { s: 1 }, { sp: true, label: "Encore un peu", rep: r, voix: un ? "Encore un peu." : null }));
+          out.push(seg(7, "tailleur", { s: 1 }, { s: 0 }, { sp: true, label: "Expire longuement", rep: r, voix: un ? "Et expire, longuement, par la bouche." : null, son: "expire" }));
         }
         return out;
       }
@@ -82,7 +82,7 @@ var PROG = (function () {
       segments: function (o, ctx, cote) {
         var n = o.reps || 8, amp = 1, out = [];
         if (cote === "G" && ctx.prudence) { n = Math.max(4, n - 2); amp = 0.7; }
-        var t = o.dyn ? [1.2, 0.3, 1.2] : [2, 1, 2];
+        var t = o.dyn ? [1.2, 0.3, 1.2] : [2.6, 1, 2.6];
         for (var i = 0; i < n; i++) {
           var r = (i + 1) + "/" + n, un = i === 0;
           out.push(seg(t[0], "rockback", { v: 0, cote: cote }, { v: amp, cote: cote }, { label: "Recule", rep: r, voix: un ? "Recule les fesses vers le talon." : null }));
@@ -102,8 +102,8 @@ var PROG = (function () {
         var n = o.rocks || 8, tenue = o.tenue || 45, out = [], amp = ctx.prudence ? 0.7 : 1;
         for (var i = 0; i < n; i++) {
           var r = (i + 1) + "/" + n;
-          out.push(seg(2, "grenouille", { v: 0 }, { v: amp }, { label: "Recule", rep: r, voix: i === 0 ? "Bascule doucement en arrière." : null }));
-          out.push(seg(2, "grenouille", { v: amp }, { v: 0 }, { label: "Avance", rep: r, voix: i === 0 ? "Et en avant." : null }));
+          out.push(seg(3, "grenouille", { v: 0 }, { v: amp }, { label: "Recule", rep: r, voix: i === 0 ? "Bascule doucement en arrière." : null }));
+          out.push(seg(3, "grenouille", { v: amp }, { v: 0 }, { label: "Avance", rep: r, voix: i === 0 ? "Et en avant." : null }));
         }
         out.push(seg(3, "grenouille", { v: 0 }, { v: amp * 0.9 }, { label: "Recule et reste", voix: "Reste en arrière. Respire, et laisse descendre." }));
         out.push(seg(tenue, "grenouille", { v: amp * 0.9 }, { v: amp }, { souffle: true }));
@@ -169,7 +169,7 @@ var PROG = (function () {
       segments: function (o, ctx) {
         var n = o.reps || 5, out = [];
         var pD = ctx.phase >= 2 ? 1 : 0.8, pG = ctx.prudence ? 0.55 : pD;
-        var t = o.dyn ? [1.4, 0.4, 1.2] : [3, 2, 2];
+        var t = o.dyn ? [1.4, 0.4, 1.2] : [3.6, 2, 2.6];
         for (var i = 0; i < n; i++) {
           var r = (i + 1) + "/" + n, un = i === 0;
           out.push(seg(t[0], "cosaque", { v: 0 }, { v: -pD }, { label: "À droite", rep: r, voix: un ? "Descends sur la jambe droite. L'autre reste tendue." : null }));
@@ -238,9 +238,9 @@ var PROG = (function () {
         for (var i = 0; i < n; i++) {
           var r = (i + 1) + "/" + n, un = i === 0;
           var z = { v: 0, cote: cote, tire: 0 }, o1 = { v: prof, cote: cote, tire: 0 };
-          out.push(seg(3, "glissade", z, o1, { label: "Laisse glisser", rep: r, voix: un ? "Laisse glisser, lentement." : null }));
-          out.push(seg(1, "glissade", o1, null, { label: "Tiens", rep: r }));
-          out.push(seg(2, "glissade", avec(o1, { tire: 1 }), avec(z, { tire: 1 }), { type: "contracte", label: "Ramène en serrant", rep: r,
+          out.push(seg(3.6, "glissade", z, o1, { label: "Laisse glisser", rep: r, voix: un ? "Laisse glisser, lentement." : null }));
+          out.push(seg(1.2, "glissade", o1, null, { label: "Tiens", rep: r }));
+          out.push(seg(2.6, "glissade", avec(o1, { tire: 1 }), avec(z, { tire: 1 }), { type: "contracte", label: "Ramène en serrant", rep: r,
             voix: un ? "Ramène, en serrant l'intérieur de la cuisse." : null }));
         }
         return out;
@@ -268,19 +268,20 @@ var PROG = (function () {
 
   // ---------- Les séances ----------
   var SEANCES = {
-    plancher: { nom: "Plancher", sous: "Même à plat, ça compte.", etapes: [["soupir", { cycles: 3 }], ["murV", { duree: 150 }]] },
-    plancherPlus: { nom: "Plancher +", sous: "Allongé, sans effort.", etapes: [["soupir", { cycles: 3 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] },
+    plancher: { nom: "Plancher", sous: "Cinq minutes allongé. Même à plat, ça compte.", etapes: [["soupir", { cycles: 3 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] },
+    plancherPlus: { nom: "Plancher +", sous: "Allongé, sans effort.", etapes: [["soupir", { cycles: 3 }], ["squeeze", { reps: 4 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] },
     calme: { nom: "Séance calme", sous: "On ouvre sans rien forcer.", etapes: [["soupir", { cycles: 3 }], ["squeeze", { reps: 4 }], ["rockback", { reps: 6 }], ["papillonAllonge", { duree: 60 }], ["ecart", { cycles: 0, fin: 50 }], ["murV", { duree: 120 }]] },
     standard: { nom: "Séance standard", sous: "Le cœur du programme.", etapes: [["soupir", { cycles: 3 }], ["squeeze", { reps: 5 }], ["rockback", { reps: 8 }], ["grenouille", { rocks: 8, tenue: 45 }], ["papillon", { cycles: 3 }], ["ecart", { cycles: 3, fin: 30 }], ["murV", { duree: 120 }]] },
     pleine: { nom: "Séance pleine", sous: "De la force jambes ouvertes, puis on ouvre.", etapes: [["soupir", { cycles: 3 }], ["squeeze", { reps: 5 }], ["cosaque", { reps: 5 }], ["copenhague", { series: 2, tenue: 15 }], ["cavalier", { series: 2, tenue: 20 }], ["glissade", { reps: 5, phaseMin: 2 }], ["grenouille", { rocks: 8, tenue: 45 }], ["ecart", { cycles: 4, fin: 40 }], ["papillon", { cycles: 3 }], ["murV", { duree: 120 }]] },
     avantMatch: { nom: "Avant-match", sous: "Dynamique, rien de long. Avant l'échauffement.", etapes: [["soupir", { cycles: 2 }], ["balancier", { reps: 12 }], ["cosaque", { reps: 8, dyn: true }], ["rockback", { reps: 8, dyn: true }], ["cavalier", { series: 1, tenue: 20, pulse: true }]] },
     redescente: { nom: "Redescente", sous: "Après le match, on fait retomber la pression.", etapes: [["soupir", { cycles: 5 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 180 }]] },
-    redescenteCourte: { nom: "Redescente courte", sous: "Trois minutes, allongé.", etapes: [["soupir", { cycles: 3 }], ["murV", { duree: 150 }]] },
-    douleur: { nom: "Plancher prudence", sous: "On entretient sans solliciter l'aine.", etapes: [["soupir", { cycles: 5 }], ["squeeze", { reps: 3, doux: true }], ["murV", { duree: 120, angle: 26 }]] }
+    redescenteCourte: { nom: "Redescente courte", sous: "Cinq minutes, allongé.", etapes: [["soupir", { cycles: 3 }], ["papillonAllonge", { duree: 60 }], ["murV", { duree: 150 }]] },
+    douleur: { nom: "Plancher prudence", sous: "On entretient sans solliciter l'aine.", etapes: [["soupir", { cycles: 5 }], ["squeeze", { reps: 3, doux: true }], ["murV", { duree: 150, angle: 26 }]] }
   };
 
+  // Une séance prête à jouer. ctx.tempo ralentit tout sauf les mises en place (1, 1.25 ou 1.5)
   function construire(cle, ctx) {
-    var S = SEANCES[cle], out = [], etapes = [];
+    var S = SEANCES[cle], out = [], etapes = [], tp = ctx.tempo || 1;
     S.etapes.forEach(function (e) {
       var id = e[0], o = e[1] || {}, X = EXOS[id];
       if (o.phaseMin && ctx.phase < o.phaseMin) return;
@@ -288,10 +289,11 @@ var PROG = (function () {
       var debut = out.length, cotes = X.cotes ? ["D", "G"] : [null];
       cotes.forEach(function (cote, ci) {
         var segs = X.segments(o, ctx, cote), premier = segs[0];
+        if (tp !== 1) segs.forEach(function (s) { s.d = Math.round(s.d * tp * 10) / 10; });
         var nomCote = cote ? X.coteNom[cote] : null;
         var voix = ci === 0 ? X.nom + ". " + X.consignes[0] + (cote ? " " + nomCote + " d'abord." : "")
           : nomCote + (cote === "G" && ctx.prudence ? ", en douceur." : ".");
-        out.push({ d: ci === 0 ? 8 : 5, pose: premier.pose, de: premier.de, a: premier.de, type: "prep",
+        out.push({ d: ci === 0 ? 12 : 7, pose: premier.pose, de: premier.de, a: premier.de, type: "prep",
           label: ci === 0 ? "En place" : "Change de côté", voix: voix });
         segs.forEach(function (s) { out.push(s); });
         for (var i = out.length - segs.length - 1; i < out.length; i++) { out[i].exo = id; out[i].cote = cote; out[i].nomCote = nomCote; out[i].etape = etapes.length; }
@@ -383,17 +385,31 @@ var PROG = (function () {
   }
 
   // Réglages des positions selon ton angle mesuré (ou estimé)
-  function reglages(angle, prudence, ph) {
+  function reglages(angle, prudence, ph, tempo) {
     var a = angle || 80;
     return {
-      prudence: !!prudence, phase: ph,
+      prudence: !!prudence, phase: ph, tempo: tempo || 1,
       angleDepart: borne(Math.round(a - 8), 50, 166),
       angleMur: borne(Math.round(a + 2), 60, 166)
     };
   }
 
+  // Toutes les phrases que la voix peut dire, pour les enregistrer une fois avec une voix naturelle
+  function textesVoix(autres) {
+    var vus = {};
+    Object.keys(SEANCES).forEach(function (cle) {
+      [1, 2, 3].forEach(function (ph) {
+        [false, true].forEach(function (pru) {
+          construire(cle, reglages(80, pru, ph)).segments.forEach(function (g) { if (g.voix) vus[g.voix] = 1; });
+        });
+      });
+    });
+    (autres || []).forEach(function (t) { vus[t] = 1; });
+    return Object.keys(vus).sort();
+  }
+
   return {
-    EXOS: EXOS, SEANCES: SEANCES, MATCHS: MATCHS, PHASES: PHASES, PALIERS: PALIERS,
+    EXOS: EXOS, SEANCES: SEANCES, MATCHS: MATCHS, PHASES: PHASES, PALIERS: PALIERS, textesVoix: textesVoix,
     construire: construire, contexte: contexte, choisir: choisir, phase: phase, palierSuivant: palierSuivant,
     reglages: reglages, iso: iso, prochainMatch: prochainMatch, JOURS: JOURS
   };
